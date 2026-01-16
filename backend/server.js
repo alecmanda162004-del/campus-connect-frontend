@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const healthRouter = require('./routes/health');  // ← new import
+const listingsRouter = require('./routes/listings');
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/health', healthRouter);  // ← use the router
-
+app.use('/api/listings', listingsRouter);
 // Basic root route
 app.get('/', (req, res) => {
   res.send('Hello from Campus-Connect backend! 🚀');
