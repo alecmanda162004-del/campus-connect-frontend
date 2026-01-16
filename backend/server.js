@@ -12,9 +12,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Basic test route
+// Basic root route (for browser testing)
 app.get('/', (req, res) => {
   res.send('Hello from Campus-Connect backend! 🚀');
+});
+
+// Health check API route (useful for monitoring & frontend connection test)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Campus-Connect backend is healthy and running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Start server
