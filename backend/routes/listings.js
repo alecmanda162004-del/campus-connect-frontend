@@ -1,36 +1,39 @@
 // backend/routes/listings.js
 const express = require('express');
 const router = express.Router();
+const pool = require('../models/db');  // Import the DB pool
 
-// Dummy listings data (we'll replace with real DB later)
-const dummyListings = [
-  {
-    id: 1,
-    title: "iPhone 12 - 128GB",
-    price: 4500,
-    description: "Excellent condition, battery health 92%. Perfect for UNILUS students.",
-    condition: "Used - Excellent",
-    sellerPhone: "260977123456",
-    imageUrl: "https://via.placeholder.com/400x300?text=iPhone"
-  },
-  {
-    id: 2,
-    title: "Engineering Textbooks - Year 1",
-    price: 800,
-    description: "Almost new, no markings. Set of 4 books.",
-    condition: "New",
-    sellerPhone: "260955987654",
-    imageUrl: "https://via.placeholder.com/400x300?text=Books"
+// GET all approved listings (for Marketplace page)
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id, 
+        title, 
+        description, 
+        price, 
+        condition, 
+        whatsapp_phone, 
+        image_url, 
+        status,
+        created_at
+      FROM listings 
+      WHERE status = 'approved'
+      ORDER BY created_at DESC
+    `);
+
+    res.status(200).json({
+      status: 'success',
+      count: result.rows.length,
+      data: result.rows
+    });
+  } catch (err) {
+    console.error('Error fetching listings:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch listings from database'
+    });
   }
-];
-
-// GET all listings (for Marketplace page)
-router.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    count: dummyListings.length,
-    data: dummyListings
-  });
 });
 
 module.exports = router;
