@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api'; // ← Assuming you already have this from previous fixes
+import api from '../utils/api';
 
 const CreateListing = () => {
   const [formData, setFormData] = useState({
@@ -18,11 +18,7 @@ const CreateListing = () => {
   const [variants, setVariants] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // ────────────────────────────────────────
-  // Add this missing state declaration
   const [uploadStatus, setUploadStatus] = useState('');
-  // ────────────────────────────────────────
 
   const navigate = useNavigate();
 
@@ -36,38 +32,40 @@ const CreateListing = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'stock_quantity' || name === 'price' ? Number(value) || '' : value
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'stock_quantity' || name === 'price' ? Number(value) || '' : value,
+    }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setImageFiles(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(prev => [...prev, ...newPreviews]);
+    setImageFiles((prev) => [...prev, ...files]);
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addVariant = () => {
-    setVariants([...variants, { color: '', size: '', stock: 1 }]);
+    setVariants((prev) => [...prev, { color: '', size: '', stock: 1 }]);
   };
 
   const removeVariant = (index) => {
-    setVariants(variants.filter((_, i) => i !== index));
+    setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
   const updateVariant = (index, field, value) => {
-    const newVariants = [...variants];
-    newVariants[index] = { ...newVariants[index], [field]: value };
-    setVariants(newVariants);
+    setVariants((prev) => {
+      const newVariants = [...prev];
+      newVariants[index] = { ...newVariants[index], [field]: value };
+      return newVariants;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -80,13 +78,17 @@ const CreateListing = () => {
       setLoading(false);
       return;
     }
+
     if (!formData.price || formData.price <= 0) {
       setMessage('Valid price is required');
       setLoading(false);
       return;
     }
 
-    const validVariants = variants.filter(v => v.stock >= 0 && (v.color.trim() || v.size.trim()));
+    const validVariants = variants.filter(
+      (v) => v.stock >= 0 && (v.color.trim() || v.size.trim())
+    );
+
     if (variants.length > 0 && validVariants.length === 0) {
       setMessage('Please fill at least color or size for each variant, or remove empty ones');
       setLoading(false);
@@ -94,12 +96,12 @@ const CreateListing = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-
       const imageUrls = [];
+
       for (const file of imageFiles) {
         const formDataImg = new FormData();
         formDataImg.append('image', file);
+
         const uploadRes = await api.post('/api/upload/image', formDataImg, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
@@ -107,6 +109,7 @@ const CreateListing = () => {
             setUploadStatus(`Uploading... ${percent}%`);
           },
         });
+
         imageUrls.push(uploadRes.data.url);
       }
 
@@ -127,12 +130,12 @@ const CreateListing = () => {
         condition: 'Used - Good',
         whatsapp_phone: '',
         stock_quantity: 1,
-        category: 'Other'
+        category: 'Other',
       });
       setImageFiles([]);
       setImagePreviews([]);
       setVariants([]);
-      setUploadStatus(''); // ← Optional: clear status after success
+      setUploadStatus('');
     } catch (err) {
       setMessage('Error: ' + (err.response?.data?.message || 'Something went wrong'));
       console.error(err);
@@ -146,7 +149,6 @@ const CreateListing = () => {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-lg-10 col-xl-8">
-
             <div className="card bg-dark border-secondary shadow-lg">
               <div className="card-body p-5">
                 <h1 className="card-title text-center text-primary display-5 fw-bold mb-5">
@@ -154,19 +156,20 @@ const CreateListing = () => {
                 </h1>
 
                 {message && (
-                  <div className={`alert ${message.includes('Success') ? 'alert-success' : 'alert-danger'} text-center mb-5`}>
+                  <div
+                    className={`alert ${
+                      message.includes('Success') ? 'alert-success' : 'alert-danger'
+                    } text-center mb-5`}
+                  >
                     {message}
                   </div>
                 )}
 
-                {/* Optional: show upload progress here */}
                 {uploadStatus && (
-                  <div className="alert alert-info text-center mb-4">
-                    {uploadStatus}
-                  </div>
+                  <div className="alert alert-info text-center mb-4">{uploadStatus}</div>
                 )}
 
-                <form onSubmit={handleSubmit} className="needs-validation">
+                <form onSubmit={handleSubmit}>
                   {/* Title */}
                   <div className="mb-4">
                     <label className="form-label text-light fw-medium">Title *</label>
@@ -188,7 +191,7 @@ const CreateListing = () => {
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      rows="5"
+                      rows={5}
                       className="form-control form-control-lg bg-secondary text-white border-secondary focus:border-primary"
                       placeholder="Describe the item, condition, features, etc..."
                     />
@@ -273,7 +276,7 @@ const CreateListing = () => {
                     </div>
                   </div>
 
-                  {/* WhatsApp */}
+                  {/* WhatsApp Phone */}
                   <div className="mb-4">
                     <label className="form-label text-light fw-medium">WhatsApp Phone (260...)</label>
                     <input
@@ -286,7 +289,7 @@ const CreateListing = () => {
                     />
                   </div>
 
-                  {/* Variants Section */}
+                  {/* Variants */}
                   <div className="mb-5">
                     <h3 className="text-light mb-3">Variants (Colors, Sizes, Stock per option)</h3>
                     <p className="text-muted mb-4">
@@ -304,7 +307,6 @@ const CreateListing = () => {
                             className="form-control bg-dark text-white border-secondary"
                           />
                         </div>
-
                         <div className="col-md-4">
                           <input
                             type="text"
@@ -314,7 +316,6 @@ const CreateListing = () => {
                             className="form-control bg-dark text-white border-secondary"
                           />
                         </div>
-
                         <div className="col-md-2">
                           <input
                             type="number"
@@ -325,7 +326,6 @@ const CreateListing = () => {
                             className="form-control bg-dark text-white border-secondary"
                           />
                         </div>
-
                         <div className="col-md-2">
                           <button
                             type="button"
@@ -347,14 +347,14 @@ const CreateListing = () => {
                     </button>
                   </div>
 
-                  {/* Image Upload */}
+                  {/* Images */}
                   <div className="mb-5">
                     <h3 className="text-light mb-3">Upload Images (multiple allowed)</h3>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleImageChange}
                       multiple
+                      onChange={handleImageChange}
                       className="form-control form-control-lg bg-secondary text-white border-secondary"
                     />
 
@@ -382,11 +382,11 @@ const CreateListing = () => {
                     )}
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Submit */}
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`btn btn-primary btn-lg w-100 ${loading ? 'disabled' : ''}`}
+                    className={`btn btn-primary btn-lg w-100 ${loading ? 'opacity-75' : ''}`}
                   >
                     {loading ? 'Posting...' : 'Post Listing'}
                   </button>
